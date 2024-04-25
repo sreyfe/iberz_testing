@@ -1,0 +1,165 @@
+
+<!--jmespath.search(jsonData.responseJSON, "entries[?year > '1923']") 
+jmespath.search(jsonData.responseJSON, "entries[?contains(title, 'f') == `true`]")
+
+these are functional jmespath queries 
+
+document.querySelectorAll('[data-columns-sortby="id"]')[0]
+$("tr td:nth-child(18)")
+-->
+
+<html>
+<head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+	<script src="js/jquery.columns.min.js"></script>
+	<script src="jmespath.js"></script>
+	<link rel="stylesheet" href="css/clean.css">
+	<style>
+
+	</style>
+</head>
+<body>
+	<div id='header'>
+		<div id='search-box'>
+			<div id=1>
+				<p><br></p>
+				<label for="field-1"></label>
+				<select id="field-1">
+				</select>
+				<label for="search-type-1"></label>
+				<select id="search-type-1">
+					<option value="contains">contains</option>
+					<option value="not-contain">does not contain</option>
+					<option value="equals">is</option>
+					<option value="greater">is greater than</option>
+					<option value="less">is less than</option>
+				</select>
+				<input type="text" id="search-bar-1" placeholder="Content...">
+			</div>
+		</div>
+		
+		<button type="add-search" onclick="addSearch()">+</button>
+		<p></p>
+		<button type="submit" onclick="jsonSearch()">Submit</button>
+		<p><br></p>
+	</div>
+	<div id="columns"></div>
+	<script>
+
+		function jsonSearch(){
+			var select = document.getElementById("search-box")
+			var div_length = select.getElementsByTagName('div').length;
+			var query = ''
+			query += "@[?"
+			for (let i = 1; i <= div_length; i++){
+				var search_bar_id = "search-bar-" + i
+				var field_id = "field-" + i
+				var search_type_id = "search-type-" + i
+
+				var content = document.getElementById(search_bar_id).value
+				var field = document.getElementById(field_id).value
+				var searchtype = document.getElementById(search_type_id).value
+
+
+				/*jmespath.search(jsonData.responseJSON, "entries[?contains(title, 'Yidn') == `true` && year == `1923`]")
+				jmespath.search(jsonData.responseJSON, "entries[?contains(title, 'Yidn') == `true` && contains(title, 'in') == `true`]")*/
+
+				if (i != 1){
+					query += "&&"
+				}
+
+				if (searchtype == 'contains'){
+					query += "contains(" + field +", '" + content + "') == `true`"
+				}
+				if (searchtype == 'not-contain'){
+					query += " !contains(" + field +", '" + content + "') == `true`"
+				}
+				else if (searchtype == 'equals'){
+					query +=  field + "==`" + content + "`"
+				}
+				else if (searchtype == 'greater'){
+					query += field + ">`" + content + "`"
+				}
+				else if (searchtype == 'less'){
+					query += field + "<`" + content + "`"
+				}
+
+			}
+
+			query += "]"
+			console.log(query)
+			var search_json = jmespath.search(jsonData.responseJSON, query)
+			if(search_json.length == 0){
+				search_json = [{}]
+			}
+			if(document.getElementById('columns').innerHTML != ''){
+				$('#columns').columns('destroy');
+			}
+
+
+
+			drawTable(search_json);
+		}
+
+		var jsonData = $.getJSON("./working.json", function(data) {
+			var json = jsonData.responseJSON
+			getKeys(json, "field-1")
+			drawTable(json)
+		});
+
+		function getKeys(json, field){
+			var keys = Object.keys(json[0])
+
+			var select = document.getElementById(field);
+
+			for (let i = 0; i < keys.length; i++){
+				var key = keys[i]
+				var el = document.createElement("option");
+				el.textContent = key;
+				el.value = key;
+				select.appendChild(el);
+			}
+
+			
+		}
+
+		function addSearch(){
+			var select = document.getElementById("search-box")
+			var div_length = select.getElementsByTagName('div').length;
+			var this_div = div_length + 1
+			var field_id = "field-" + this_div
+			console.log(field_id)
+
+			select.innerHTML += '<div id=' + this_div +'> <label for="field-'+this_div+'"></label> <select id="field-'+this_div+'"> </select> <label for="search-type-'+this_div+'"></label> <select id="search-type-'+this_div+'"> <option value="contains">contains</option> <option value="not-contain">does not contain</option> <option value="equals">is exactly</option> <option value="greater">is greater than</option> <option value="less">is less than</option> </select> <input type="text" id="search-bar-'+this_div+'" placeholder="Content..."><button id="remove-search-' + this_div + '"type="submit" onclick="removeSearch('+this_div+')">-</button></div>'
+			
+			document.getElementById(field_id).innerHTML = document.getElementById('field-1').innerHTML
+
+			}
+
+		function removeSearch(id){
+			document.getElementById(id).outerHTML = ""
+			var select = document.getElementById("search-box")
+			var div_length = select.getElementsByTagName('div').length;
+
+			if(document.getElementById(id+1) !== null){
+				for (let i = id + 1; i <= div_length + 1; i++){
+						console.log(i)
+						console.log(div_length)
+						var demoted = i - 1;
+						document.getElementById(i).outerHTML = '<div id=' + demoted +'> <label for="field-'+demoted+'"></label> <select id="field-'+demoted+'"> </select> <label for="search-type-'+demoted+'"></label> <select id="search-type-'+demoted+'"> <option value="contains">contains</option> <option value="not-contain">does not contain</option> <option value="equals">is exactly</option> <option value="greater">is greater than</option> <option value="less">is less than</option> </select> <input type="text" id="search-bar-'+demoted+'" placeholder="Content..."><button id="remove-search-' + demoted + '"type="submit" onclick="removeSearch('+demoted+')">-</button>'
+						var field = 'field-'+demoted;
+						document.getElementById(field).innerHTML = document.getElementById("field-1").innerHTML
+			}
+		}
+	}
+		
+		function drawTable(json_array){
+			$(document).ready(function() {
+
+				$('#columns').columns({data:json_array});
+			});
+		}
+
+	</script>
+</body>
+</html>
