@@ -415,8 +415,8 @@ $("tr td:nth-child(18)")
 			    id = jsonData.responseJSON[entry]['id'];
 			    title = jsonData.responseJSON[entry]['title'];
 
-			    id_link = '<a href=/entries/' + id + '>' + id + '</a>';
-			    title_link = '<a href=/entries/' + id + '>' + title + '</a>';
+			    id_link = '<a href=./entries/' + id + '>' + id + '</a>';
+			    title_link = '<a href=./entries/' + id + '>' + title + '</a>';
 
 			    jsonData.responseJSON[entry]['id'] = id_link;
 			    jsonData.responseJSON[entry]['title'] = title_link;
